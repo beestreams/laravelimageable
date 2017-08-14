@@ -14,11 +14,14 @@ class Image extends Model
         'alt_text',
         'path',
         'size',
+        'sizeHandle',
     ];
 
 
-    public function setProperties($file, $variant = null)
+    public function setProperties($file, $sizeHandle = 'original')
     {
+        $this->mime_type = $file->getMimeType();
+        $this->size = $file->getClientSize();
         $this->name = $this->sanitizeFileName($file->name);
     }
 
@@ -30,8 +33,8 @@ class Image extends Model
     public function saveFile($file)
     {
         // size variable
-        if (!$this->size) {
-            $this->size = 'original';
+        if (!$this->sizeHandle) {
+            $this->sizeHandle = 'original';
         }
 
         // make new imagemanager
@@ -39,17 +42,17 @@ class Image extends Model
 
         // get file name if not set.
         if (empty($this->name)) {
-            $this->name = $file->name;
+            $this->name = $this->sanitizeFileName($file->name);
         }
 
         // Get path from config
         $path = config('filesystems.disks.'.config('imageable.disk').'.root');
         
         // Make directory if not set.
-        \Storage::disk(config('imageable.disk'))->makeDirectory($this->path.'/'.$this->size);
+        \Storage::disk(config('imageable.disk'))->makeDirectory($this->path.'/'.$this->sizeHandle);
         
         // save file. Should be validated before save.
-        $imageManager->make($file)->save($path.'/'.$this->path.'/'.$this->size.'/'.$this->name);
+        $imageManager->make($file)->save($path.'/'.$this->path.'/'.$this->sizeHandle.'/'.$this->name);
 
         return $this;
     }

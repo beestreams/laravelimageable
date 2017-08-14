@@ -50,8 +50,9 @@ class IntegrationTest extends TestCase
         $file = UploadedFile::fake()->image('avatar.jpg');
         $model = new Image();
         $model->setProperties($file);
-        $this->assertEquals($file->size, $model->size);
-        $this->assertEquals($file->name, $model->name);
+        $this->assertEquals($file->getClientSize(), $model->size);
+        $this->assertEquals(studly_case($file->name), $model->name);
+        $this->assertEquals($file->getMimeType(), $model->mime_type);
     }
 }
 
