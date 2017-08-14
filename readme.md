@@ -17,6 +17,19 @@ When model is deleted, it also deletes the file.
 
 For method list see `Imageable` trait or `IntegrationTest`
 
+If you want alt_text and description for your files … support for that is coming
+
+TODO:
+- Alt text
+- Description
+- Job for resizing
+- Config for sizes
+- Dispatch jobs loop
+- Save resized function
+- Remove file on delete
+- Get file from url
+
+
 ## Important
 There is no validation in this package, please validate your requests before using.
 
