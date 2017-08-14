@@ -1,0 +1,16 @@
+{
+    "name": "beestreams/laravelimageable",
+    "description": "Add images to your models. Resizes images",
+    "type": "project",
+    "require": {
+        "intervention/image": "^2.4"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Mikael Biström",
+            "email": "info@studiotriangular.se"
+        }
+    ],
+    "minimum-stability": "dev"
+}
