@@ -16,7 +16,7 @@ class ImageableProvider extends ServiceProvider
         require './vendor/autoload.php';
         $this->publishes([
             __DIR__.'/config/imageable.php' => config_path('imageable.php'),
-        ]);
+        ], 'config');
 
         $this->loadMigrationsFrom(__DIR__.'/Migrations');
         
