@@ -2,8 +2,8 @@
 return [
     'disk' => 'local',
     'sizes' => [
-        'small' => [250, null],
-        'medium' => [800, null],
-        'large' => [1400, null],
+        'small' => ['width' => 250, 'height' => 250],
+        'medium' => ['width' => 800, 'height' => null],
+        'large' => ['width' => 1400, 'height' => null],
     ]
 ];
