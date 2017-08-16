@@ -28,9 +28,17 @@ class Image extends Model
             ->persist();
     }
 
+    public static function createResized($imageId, $sizeHandle)
+    {
+        $imageCopy = Image::find($imageId)->replicate();
+        $resizer = new ImageResizer($file);
+        $savePath = $imageCopy->path.$sizeHandle;
+        $resizedImage = $resizer->reSizeTo($configSize)->saveTo($savePath); // The important line
+    }
+
     public function persist()
     {
-        $this->imageable()->associate($this->model) ;
+        $this->imageable()->associate($this->model);
     }
 
     public function setModel($model)
