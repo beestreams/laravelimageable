@@ -20,10 +20,10 @@ For method list see `Imageable` trait or `IntegrationTest`
 If you want alt_text and description for your files … support for that is coming
 
 TODO:
-- Alt text
-- Description
-- Job for resizing
 - Config for sizes
+- Resize class
+- Resize Job
+- Queue image resizing
 - Dispatch jobs loop
 - Save resized function
 - Remove file on delete
