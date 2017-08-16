@@ -1,4 +1,5 @@
 <?php
+use Beestreams\LaravelImageable\Helpers\ImageResizer;
 use Beestreams\LaravelImageable\Models\Image;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
@@ -29,6 +30,14 @@ class IntegrationTest extends TestCase
     }
 
     /** @test */
+    public function model_is_set_on_image()
+    {
+        $model = new Image();
+        $model->setModel($this->exampleModel);
+        $this->assertTrue($model->model instanceof ExModelObject); 
+    }
+
+    /** @test */
     public function file_is_saved_to_disk_as_original()
     {
         $newName = 'noavatar.jpg';
@@ -39,8 +48,7 @@ class IntegrationTest extends TestCase
         $image->name = $newName; 
         $image->saveFile($file);
         $this->assertTrue(\Storage::disk(config('imageable.disk'))->exists($path.'original/'.$newName));
-        \Storage::disk(config('imageable.disk'))->delete($path.'original/'.$newName);
-        $this->assertFalse(\Storage::disk(config('imageable.disk'))->exists($path.'original/'.$newName));
+        \Storage::disk(config('imageable.disk'))->delete($path.'original/'.$newName); // Cleanup - delete file
     }
 
     /** @test */
@@ -48,12 +56,46 @@ class IntegrationTest extends TestCase
     {
         $size = 'original';
         $file = UploadedFile::fake()->image('avatar.jpg');
+        
         $model = new Image();
+        
+        $file->alt_text = 'Alt text test';
+        $file->description = 'Image description';
+
+        $calculatedPath = "{$this->exampleModel->uploadPath}/{$this->exampleModel->id}/";
+        $model->setModel($this->exampleModel);
         $model->setProperties($file);
+
+        $this->assertEquals($file->description, $model->description);
+        $this->assertEquals($file->alt_text, $model->alt_text);
+        $this->assertEquals($calculatedPath, $model->path);
+        $this->assertEquals($size, $model->size_handle);
         $this->assertEquals($file->getClientSize(), $model->size);
         $this->assertEquals(studly_case($file->name), $model->name);
         $this->assertEquals($file->getMimeType(), $model->mime_type);
     }
+
+    /** @test */
+    public function file_is_resized()
+    {
+        // Setup fake file, parent model and config path
+        $file = UploadedFile::fake()->image('avatar.jpg', 2000, 2000)->size(100);
+        $configSize = config('imageable.sizes.small');
+        $parent = $this->exampleModel;
+        $path = config('filesystems.disks.'.config('imageable.disk').'.root');
+        $savePath = "{$path}/{$parent->uploadPath}/small/{$file->name}";
+        
+        $resizer = new ImageResizer($file);
+        $resizedImage = $resizer->reSizeTo($configSize)->saveTo($savePath); // The important line
+
+        $this->assertEquals($configSize['width'],$resizedImage->width());
+        $this->assertEquals($configSize['height'],$resizedImage->height());
+        $this->assertTrue(\Storage::disk(config('imageable.disk'))->exists("{$parent->uploadPath}/small/{$file->name}"));
+        \Storage::disk(config('imageable.disk'))->delete("{$parent->uploadPath}/small/{$file->name}"); // Cleanup - delete file
+    }
+
+
+
 }
 
 /**
@@ -61,4 +103,5 @@ class IntegrationTest extends TestCase
 */
 class ExModelObject extends Model
 {
+    public $uploadPath = 'basepath';
 }
