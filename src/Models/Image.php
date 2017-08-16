@@ -14,15 +14,48 @@ class Image extends Model
         'alt_text',
         'path',
         'size',
-        'sizeHandle',
+        'size_handle',
+        'mime_type',
     ];
+    private $model;
 
-
-    public function setProperties($file, $sizeHandle = 'original')
+    public static function createWithFile($model, $file, $props = []) 
     {
-        $this->mime_type = $file->getMimeType();
-        $this->size = $file->getClientSize();
-        $this->name = $this->sanitizeFileName($file->name);
+        $image = new Image;
+        $image->setModel($model)
+            ->setProperties($file, $props)
+            ->saveFile($file)
+            ->persist();
+    }
+
+    public function persist()
+    {
+        $this->imageable()->associate($this->model) ;
+    }
+
+    public function setModel($model)
+    {
+        $this->model = $model;
+    }
+
+    public function setProperties($file, $props = [])
+    {
+        $basePath = $this->model->uploadPath.'/'.$this->model->id.'/';
+        $defaultProps = [
+            'name' => $this->sanitizeFileName($file->name),
+            'size_handle' => 'original',
+            'alt_text' => $file->alt_text ?? '',
+            'description' => $file->description ?? '',
+            'mime_type' => $file->getMimeType(),
+            'size' => $file->getClientSize(),
+            'size_handle' => 'original',
+            'path' => $basePath
+        ];
+        $props = array_merge($defaultProps, $props);
+
+        $this->fill($props);
+
+        return $this;
     }
 
     public function sanitizeFileName($name)
@@ -51,7 +84,7 @@ class Image extends Model
         // Make directory if not set.
         \Storage::disk(config('imageable.disk'))->makeDirectory($this->path.'/'.$this->sizeHandle);
         
-        // save file. Should be validated before save.
+        // save file. Should be validated in request before save.
         $imageManager->make($file)->save($path.'/'.$this->path.'/'.$this->sizeHandle.'/'.$this->name);
 
         return $this;
@@ -59,8 +92,8 @@ class Image extends Model
     /**
      * Example model relation
      */
-    // public function model()
-    // {
-    // 	return $this->morphedByMany(Model::class, 'categorizable');
-    // }
+    public function imageable()
+    {
+    	return $this->morphTo();
+    }
 }
