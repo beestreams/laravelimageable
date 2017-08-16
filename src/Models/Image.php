@@ -38,6 +38,11 @@ class Image extends Model
         $this->model = $model;
     }
 
+    public function getModelAttribute()
+    {
+        return $this->model;
+    }
+
     public function setProperties($file, $props = [])
     {
         $basePath = $this->model->uploadPath.'/'.$this->model->id.'/';
