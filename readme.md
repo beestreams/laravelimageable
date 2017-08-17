@@ -26,6 +26,7 @@ TODO:
 - Get file from url (route and response)
 - Mime conversion
 - SVG support
+- create failsafe in ResizeImage job. If size does not exist, fail gracefully
 
 
 ## Important
