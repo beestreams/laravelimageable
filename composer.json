@@ -12,5 +12,10 @@
             "email": "info@studiotriangular.se"
         }
     ],
+    "autoload": {
+        "psr-4": {
+            "Beestreams\\LaravelImageable\\": "src/"
+        }
+    },
     "minimum-stability": "dev"
 }
