@@ -1,12 +1,14 @@
 <?php
-use Beestreams\LaravelImageable\Helpers\ImageResizer;
-use Beestreams\LaravelImageable\Models\Image;
+use Tests\TestCase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Bus;
 use Illuminate\Database\Eloquent\Model;
+use Beestreams\LaravelImageable\Models\Image;
+use Beestreams\LaravelImageable\Traits\Imageable;
+use Beestreams\LaravelImageable\Helpers\ImageResizer;
 use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Http\UploadedFile;
-use Tests\TestCase;
-use Beestreams\LaravelImageable\Traits\Imageable;
+use Beestreams\LaravelImageable\Jobs\ResizeImage;
 
 class IntegrationTest extends TestCase
 {
@@ -110,6 +112,43 @@ class IntegrationTest extends TestCase
         $sourceFile = $resizedImage->sourceFile;
         $this->assertTrue(!empty($sourceFile));
         $resizedImage->delete();
+    }
+
+    /** @test */
+    public function when_parent_gets_file_attached_the_file_is_saved ()
+    {
+        $parent = $this->exampleModel;
+        
+        $file = UploadedFile::fake()->image('avatar.jpg', 2000, 2000)->size(100);
+        $image = Image::createWithFile($this->exampleModel, $file);
+        $parent->attachImage($file);
+        $this->assertTrue(!empty($parent->images->first()->sourceFile));
+
+    }
+    
+    /** @test */
+    public function resize_jobs_are_dispatched_to_queue ()
+    {
+        Bus::fake();
+        
+        // When a model gets a file attached
+        $parent = $this->exampleModel;
+        
+        $file = UploadedFile::fake()->image('avatar.jpg', 2000, 2000)->size(100);
+
+        $parent->attachImage($file);
+        
+        // And that file is saved
+        // Available sizes should be generated from queue
+        $image = $parent->images->first();
+        // Perform order shipping...
+        
+        Bus::assertDispatched(ResizeImage::class, function ($job) use ($image) {
+            return $job->imageId === $image->id;
+        });
+
+        // Assert a job was not dispatched...
+        Bus::assertNotDispatched(AnotherJob::class); 
     }
 
 

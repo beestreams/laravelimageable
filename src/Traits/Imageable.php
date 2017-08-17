@@ -11,7 +11,7 @@ trait Imageable
      * Add or create single category
      * @param String $name The Category name to be added
      */
-    public function addFile($file)
+    public function attachImage($file)
     {
         // If not image, return
         // $file->extension check;
@@ -19,19 +19,11 @@ trait Imageable
             return false;
         }
         // 1. Create image model and save to parent model
-        $imageModel = new Image();
-        $imageModel->setProperties($file);
-        $this->images()->save($imageModel);
+        $image = Image::createWithFile($this, $file);
         
-        // 2. Create file and save to disk
-        $filePath = $imageModel->path; // {model: filepath}/{modelId}
-        $fileName = $imageModel->name;
-
-
-
-        // 3. Dispatch jobs for image sizes
+        // 2. Dispatch jobs for image sizes
         $jobDispatcher = new JobDispatcher();
-        $jobDispatcher->queueImageSizes($imageModel->id);
+        $jobDispatcher->queueImageSizes($image->id);
 
         return $this;
     }
@@ -41,6 +33,6 @@ trait Imageable
     */
     public function images()
     {
-        return $this->morphToMany(Image::class, 'imageable');
+        return $this->morphMany(Image::class, 'imageable');
     }
 }

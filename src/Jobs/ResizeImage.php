@@ -11,9 +11,8 @@ use Illuminate\Queue\SerializesModels;
 
 class ResizeImage implements ShouldQueue
 {
-    private $imageModelId;
-    private $imageSizes;
-    private $sizeHandle;
+    public $imageId;
+    public $sizeHandle;
 
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -22,10 +21,10 @@ class ResizeImage implements ShouldQueue
      *
      * @return void
      */
-    public function __construct($imageModelId, $sizeHandle)
+    public function __construct($imageId, $sizeHandle)
     {
-        $this->imageModelId = $imageModelId;
-        $this->imageSizes = config('imageable.sizes');
+        $this->imageId = $imageId;
+        // $this->imageSizes = config('imageable.sizes'); // Check if sizeHandle exist in config sizes
         $this->sizeHandle = $sizeHandle;
     }
 
@@ -36,8 +35,7 @@ class ResizeImage implements ShouldQueue
      */
     public function handle()
     {
-        $imageModel = Image::findOrFail($this->imageModelId);
-        $imageModel->size_handle = $this->sizeHandle;
-        $resizer = new ImageResizer($basePath);
+        $imageModel = Image::findOrFail($this->imageId);
+        $imageModel->createResized($imageModel, $this->sizeHandle);
     }
 }
