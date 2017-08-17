@@ -41,6 +41,6 @@ trait Imageable
     */
     public function images()
     {
-        return $this->morphToMany(Images::class, 'imageable');
+        return $this->morphToMany(Image::class, 'imageable');
     }
 }
