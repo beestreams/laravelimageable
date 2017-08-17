@@ -13,7 +13,6 @@ class ImageableProvider extends ServiceProvider
      */
     public function boot()
     {
-        require './vendor/autoload.php';
         $this->publishes([
             __DIR__.'/config/imageable.php' => config_path('imageable.php'),
         ], 'config');

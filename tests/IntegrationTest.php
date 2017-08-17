@@ -16,6 +16,7 @@ class IntegrationTest extends TestCase
     public function setUp()
     {
         //  ../../../vendor/bin/phpunit
+        require './vendor/autoload.php';
         parent::setUp();
         $this->exampleModel();
     }
@@ -42,12 +43,8 @@ class IntegrationTest extends TestCase
     {
         $newName = 'noavatar.jpg';
         $file = UploadedFile::fake()->image('avatar.jpg');
-        $image = new Image();
-        $path = 'uploads/1/';
-        $image->path = $path;
-        $image->name = $newName; 
-        $image->saveFile($file);
-        $this->assertTrue(\Storage::disk(config('imageable.disk'))->exists($path.'original/'.$newName));
+        $image = Image::createWithFile($this->exampleModel, $file);
+        $this->assertTrue(!empty($image->fileSource));
         \Storage::disk(config('imageable.disk'))->delete($path.'original/'.$newName); // Cleanup - delete file
     }
 
@@ -55,16 +52,16 @@ class IntegrationTest extends TestCase
     public function image_model_is_populated()
     {
         $size = 'original';
-        $file = UploadedFile::fake()->image('avatar.jpg');
+        $file = UploadedFile::fake()->image('avatar.jpg', 2000, 2000);
         
         $model = new Image();
-        
         $file->alt_text = 'Alt text test';
         $file->description = 'Image description';
-
+        
         $calculatedPath = "{$this->exampleModel->uploadPath}/{$this->exampleModel->id}/";
         $model->setModel($this->exampleModel);
-        $model->setProperties($file);
+        $model->setFile($file);
+        $model->setProperties();
 
         $this->assertEquals($file->description, $model->description);
         $this->assertEquals($file->alt_text, $model->alt_text);
@@ -84,7 +81,6 @@ class IntegrationTest extends TestCase
         $parent = $this->exampleModel;
         $path = config('filesystems.disks.'.config('imageable.disk').'.root');
         $savePath = "{$path}/{$parent->uploadPath}/small/{$file->name}";
-        
         $resizer = new ImageResizer($file);
         $resizedImage = $resizer->reSizeTo($configSize)->saveTo($savePath); // The important line
 

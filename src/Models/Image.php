@@ -18,32 +18,42 @@ class Image extends Model
         'mime_type',
     ];
     private $model;
+    private $file;
+    
+    public static function boot()
+    {
+        parent::boot();
+
+        static::saved(function($image)
+        {
+            $image->saveFile();
+        });
+    }
 
     public static function createWithFile($model, $file, $props = []) 
     {
         $image = new Image;
         $image->setModel($model)
-            ->setProperties($file, $props)
-            ->saveFile($file)
-            ->persist();
+            ->setFile($file)
+            ->setProperties($props)
+            ->save();
+        return $image;
     }
 
     public static function createResized($imageId, $sizeHandle)
     {
         $imageCopy = Image::find($imageId)->replicate();
+        $imageCopy->size_handle = $sizeHandle;
+        $file = \Storage::disk(config('imageable.disk'))->get($path.'original/'.$imageCopy->name);
         $resizer = new ImageResizer($file);
-        $savePath = $imageCopy->path.$sizeHandle;
-        $resizedImage = $resizer->reSizeTo($configSize)->saveTo($savePath); // The important line
-    }
-
-    public function persist()
-    {
-        $this->imageable()->associate($this->model);
+        $imageCopy->setFile($resizer->reSizeTo($configSize));
+        $imageCopy->save();
     }
 
     public function setModel($model)
     {
         $this->model = $model;
+        return $this;
     }
 
     public function getModelAttribute()
@@ -51,8 +61,24 @@ class Image extends Model
         return $this->model;
     }
 
-    public function setProperties($file, $props = [])
+    public function setFile($file)
     {
+        $this->file = $file;
+        return $this;
+    }
+
+    public function getFileSourceAttribute()
+    {
+        return \Storage::disk(config('imageable.disk'))->get("{$this->path}{$this->size_handle}/{$this->name}");
+    }
+
+    public function setProperties($props = [])
+    {
+        if (empty($this->file)) {
+            $this->setFile($this->fileSource);
+        }
+        $file = $this->file;
+        
         $basePath = $this->model->uploadPath.'/'.$this->model->id.'/';
         $defaultProps = [
             'name' => $this->sanitizeFileName($file->name),
@@ -78,11 +104,6 @@ class Image extends Model
 
     public function saveFile($file)
     {
-        // size variable
-        if (!$this->sizeHandle) {
-            $this->sizeHandle = 'original';
-        }
-
         // make new imagemanager
         $imageManager = new ImageManager();
 
@@ -98,7 +119,7 @@ class Image extends Model
         \Storage::disk(config('imageable.disk'))->makeDirectory($this->path.'/'.$this->sizeHandle);
         
         // save file. Should be validated in request before save.
-        $imageManager->make($file)->save($path.'/'.$this->path.'/'.$this->sizeHandle.'/'.$this->name);
+        $imageManager->make($this->file)->save($path.'/'.$this->path.'/'.$this->sizeHandle.'/'.$this->name);
 
         return $this;
     }
