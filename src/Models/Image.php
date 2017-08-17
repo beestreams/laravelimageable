@@ -4,7 +4,7 @@ namespace Beestreams\LaravelImageable\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Intervention\Image\ImageManager;
-
+use Beestreams\LaravelImageable\Helpers\ImageResizer;
 
 class Image extends Model
 {
@@ -23,11 +23,14 @@ class Image extends Model
     public static function boot()
     {
         parent::boot();
-
-        static::saved(function($image)
-        {
+        static::saving(function($image){
             $image->saveFile();
         });
+        
+        static::deleted(function($image){
+            $image->deleteFile();
+        });
+
     }
 
     public static function createWithFile($model, $file, $props = []) 
@@ -36,18 +39,25 @@ class Image extends Model
         $image->setModel($model)
             ->setFile($file)
             ->setProperties($props)
-            ->save();
+            ->saveAndAttach();
         return $image;
     }
-
+    public function saveAndAttach()
+    {
+        $this->imageable()->associate($this->model);
+        $this->save();
+        return $this;
+    }
     public static function createResized($imageId, $sizeHandle)
     {
         $imageCopy = Image::find($imageId)->replicate();
         $imageCopy->size_handle = $sizeHandle;
-        $file = \Storage::disk(config('imageable.disk'))->get($path.'original/'.$imageCopy->name);
+        $file = \Storage::disk(config('imageable.disk'))->get($imageCopy->path.'original/'.$imageCopy->name);
         $resizer = new ImageResizer($file);
+        $configSize = config('imageable.sizes.'.$sizeHandle);
         $imageCopy->setFile($resizer->reSizeTo($configSize));
         $imageCopy->save();
+        return $imageCopy;
     }
 
     public function setModel($model)
@@ -66,16 +76,23 @@ class Image extends Model
         $this->file = $file;
         return $this;
     }
-
-    public function getFileSourceAttribute()
+    
+    public function getSourcePathAttribute()
     {
-        return \Storage::disk(config('imageable.disk'))->get("{$this->path}{$this->size_handle}/{$this->name}");
+        $path = \Storage::disk(config('imageable.disk'))->url("{$this->path}{$this->size_handle}/{$this->name}");
+        return $path;
+    }
+
+    public function getSourceFileAttribute()
+    {
+        $path = substr($this->sourcePath, 8);
+        return \Storage::get($path);
     }
 
     public function setProperties($props = [])
     {
         if (empty($this->file)) {
-            $this->setFile($this->fileSource);
+            $this->setFile($this->sourceFile);
         }
         $file = $this->file;
         
@@ -102,7 +119,7 @@ class Image extends Model
         return studly_case($name);
     }
 
-    public function saveFile($file)
+    public function saveFile()
     {
         // make new imagemanager
         $imageManager = new ImageManager();
@@ -113,14 +130,22 @@ class Image extends Model
         }
 
         // Get path from config
-        $path = config('filesystems.disks.'.config('imageable.disk').'.root');
+        $configPath = config('filesystems.disks.'.config('imageable.disk').'.root');
         
         // Make directory if not set.
-        \Storage::disk(config('imageable.disk'))->makeDirectory($this->path.'/'.$this->sizeHandle);
+        \Storage::disk(config('imageable.disk'))->makeDirectory($this->path.'/'.$this->size_handle);
         
         // save file. Should be validated in request before save.
-        $imageManager->make($this->file)->save($path.'/'.$this->path.'/'.$this->sizeHandle.'/'.$this->name);
+        $response = $imageManager
+            ->make($this->file)
+            ->save($configPath.'/'.$this->path.'/'.$this->size_handle.'/'.$this->name);
+        return $this;
+    }
 
+
+    public function deleteFile()
+    {
+        \Storage::disk(config('imageable.disk'))->deleteDirectory($this->path.'/'.$this->size_handle);
         return $this;
     }
     /**
