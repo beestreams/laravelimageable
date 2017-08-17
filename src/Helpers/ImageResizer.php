@@ -20,25 +20,22 @@ class ImageResizer
     public function reSizeTo($dimensions)
     {
         extract($dimensions); // [width, height]
-        
         // Crop image to dimensions
         if( isset($width) && isset($height) ) {
             $this->file = $this->imageManager
                 ->make( $this->file )
-                ->encode('jpg')
                 ->fit($width, $height, function($constraint){
                     $constraint->upSize();
                 });
-            return $this;
+            return $this->file;
         }
 
         // Resize with null value, preserve aspect ratio
         $this->file = $this->imageManager->make( $this->file )
-            ->encode('jpg')
             ->resize($width, $height, function($constraint){
                 $constraint->aspectRatio();
             });
-        return $this;
+        return $this->file;
     }
 
     public function saveTo($path)

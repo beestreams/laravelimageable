@@ -6,6 +6,7 @@ use Illuminate\Foundation\Testing\DatabaseMigrations;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
+use Beestreams\LaravelImageable\Traits\Imageable;
 
 class IntegrationTest extends TestCase
 {
@@ -30,6 +31,14 @@ class IntegrationTest extends TestCase
         $this->exampleModel->id = 1;
     }
 
+    protected function createOriginal()
+    {
+        $newName = 'noavatar.jpg';
+        $file = UploadedFile::fake()->image('avatar.jpg', 2000, 2000)->size(100);
+        $image = Image::createWithFile($this->exampleModel, $file);
+        return $image;
+    }
+
     /** @test */
     public function model_is_set_on_image()
     {
@@ -39,13 +48,32 @@ class IntegrationTest extends TestCase
     }
 
     /** @test */
+    public function image_has_access_to_file_source_path ()
+    {
+        $image = $this->createOriginal(); 
+        $image->sourcePath;
+        $this->assertTrue(!empty($image->sourcePath));
+        $image->delete();
+    }
+
+    /** @test */
     public function file_is_saved_to_disk_as_original()
     {
         $newName = 'noavatar.jpg';
         $file = UploadedFile::fake()->image('avatar.jpg');
         $image = Image::createWithFile($this->exampleModel, $file);
-        $this->assertTrue(!empty($image->fileSource));
-        \Storage::disk(config('imageable.disk'))->delete($path.'original/'.$newName); // Cleanup - delete file
+        $this->assertTrue(!empty($image->sourceFile));
+        $image->delete();
+    }
+
+    /** @test */
+    public function file_is_deleted_on_model_delete ()
+    {
+        $this->expectException('Illuminate\Contracts\Filesystem\FileNotFoundException'); 
+        $image = $this->createOriginal(); 
+        $path = $image->sourcePath;
+        $image->delete();
+        $empty = \Storage::get(substr($path, 8));
     }
 
     /** @test */
@@ -76,18 +104,12 @@ class IntegrationTest extends TestCase
     public function file_is_resized()
     {
         // Setup fake file, parent model and config path
-        $file = UploadedFile::fake()->image('avatar.jpg', 2000, 2000)->size(100);
-        $configSize = config('imageable.sizes.small');
-        $parent = $this->exampleModel;
-        $path = config('filesystems.disks.'.config('imageable.disk').'.root');
-        $savePath = "{$path}/{$parent->uploadPath}/small/{$file->name}";
-        $resizer = new ImageResizer($file);
-        $resizedImage = $resizer->reSizeTo($configSize)->saveTo($savePath); // The important line
-
-        $this->assertEquals($configSize['width'],$resizedImage->width());
-        $this->assertEquals($configSize['height'],$resizedImage->height());
-        $this->assertTrue(\Storage::disk(config('imageable.disk'))->exists("{$parent->uploadPath}/small/{$file->name}"));
-        \Storage::disk(config('imageable.disk'))->delete("{$parent->uploadPath}/small/{$file->name}"); // Cleanup - delete file
+        $image = $this->createOriginal();
+        $configSize = config('imageabledd.sizes.small');
+        $resizedImage = $image->createResized($image->id, 'small');
+        $sourceFile = $resizedImage->sourceFile;
+        $this->assertTrue(!empty($sourceFile));
+        $resizedImage->delete();
     }
 
 
@@ -99,5 +121,6 @@ class IntegrationTest extends TestCase
 */
 class ExModelObject extends Model
 {
+    use Imageable;
     public $uploadPath = 'basepath';
 }
