@@ -13,11 +13,9 @@ class ImageableProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->publishes([
-            __DIR__.'/config/imageable.php' => config_path('imageable.php'),
-        ], 'config');
-
         $this->loadMigrationsFrom(__DIR__.'/Migrations');
+
+        $this->loadRoutesFrom(__DIR__.'/routes.php');
         
         $this->publishes([
             __DIR__ . '/Migrations' => $this->app->databasePath() . '/migrations'
@@ -26,6 +24,10 @@ class ImageableProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . '/Traits' => $this->app->basePath() . '/Morphable'
         ], 'traits');
+        
+        $this->publishes([
+            __DIR__.'/config/imageable.php' => config_path('imageable.php'),
+        ], 'config');
     }
 
     /**

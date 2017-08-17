@@ -79,14 +79,18 @@ class Image extends Model
     
     public function getSourcePathAttribute()
     {
-        $path = \Storage::disk(config('imageable.disk'))->url("{$this->path}{$this->size_handle}/{$this->name}");
+        $path = "{$this->path}{$this->size_handle}/{$this->name}";
+//        $path = \Storage::disk(config('imageable.disk'))->url("{$this->path}{$this->size_handle}/{$this->name}");
         return $path;
     }
 
     public function getSourceFileAttribute()
     {
-        $path = substr($this->sourcePath, 8);
-        return \Storage::get($path);
+        return \Storage::get($this->sourcePath);
+    }
+
+    public function fileResponse()
+    {
     }
 
     public function setProperties($props = [])
@@ -96,9 +100,9 @@ class Image extends Model
         }
         $file = $this->file;
         
-        $basePath = $this->model->uploadPath.'/'.$this->model->id.'/';
+        $basePath = $this->model->imagePath.$this->model->id.'/';
         $defaultProps = [
-            'name' => $this->sanitizeFileName($file->name),
+            'name' => $this->sanitizeFileName($file->getClientOriginalName()),
             'size_handle' => 'original',
             'alt_text' => $file->alt_text ?? '',
             'description' => $file->description ?? '',

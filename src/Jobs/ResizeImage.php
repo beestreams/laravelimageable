@@ -35,7 +35,7 @@ class ResizeImage implements ShouldQueue
      */
     public function handle()
     {
-        $imageModel = Image::findOrFail($this->imageId);
-        $imageModel->createResized($imageModel, $this->sizeHandle);
+        $imageModel = new Image();
+        $imageModel->createResized($this->imageId, $this->sizeHandle);
     }
 }

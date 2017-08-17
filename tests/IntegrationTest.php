@@ -88,11 +88,11 @@ class IntegrationTest extends TestCase
         $file->alt_text = 'Alt text test';
         $file->description = 'Image description';
         
-        $calculatedPath = "{$this->exampleModel->uploadPath}/{$this->exampleModel->id}/";
+        $calculatedPath = "{$this->exampleModel->imagePath}{$this->exampleModel->id}/";
         $model->setModel($this->exampleModel);
         $model->setFile($file);
         $model->setProperties();
-
+        $this->assertTrue(strpos($model->path, $this->exampleModel->imagePath) !== false);
         $this->assertEquals($file->description, $model->description);
         $this->assertEquals($file->alt_text, $model->alt_text);
         $this->assertEquals($calculatedPath, $model->path);
@@ -161,5 +161,5 @@ class IntegrationTest extends TestCase
 class ExModelObject extends Model
 {
     use Imageable;
-    public $uploadPath = 'basepath';
+    public $imagePath = 'basepath/';
 }
