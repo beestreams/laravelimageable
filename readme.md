@@ -11,9 +11,10 @@
 
 When file is added to model, it first persists an Image model to DB
 it then saves the file to specified path.
-You can set alternative sizes to make several images. These are jobs dispatched to queue.
+You can set sizes in config to make several images. These are jobs dispatched to queue.
 For each image size it makes an additional model.
 When model is deleted, it also deletes the file.
+When original model is deleted all related models and files are deleted
 
 For method list see `Imageable` trait or `IntegrationTest`
 
@@ -29,6 +30,7 @@ TODO:
 - Whats up with all the save methods?
 - External storage services
 - Delete all sizes on delete
+- Create controller for image and refactor routes file
 
 
 ## Important
