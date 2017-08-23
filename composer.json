@@ -17,5 +17,12 @@
             "Beestreams\\LaravelImageable\\": "src/"
         }
     },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Beestreams\\LaravelImageable\\ImageableProvider"
+            ]
+        }
+    },
     "minimum-stability": "dev"
 }

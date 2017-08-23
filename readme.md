@@ -2,7 +2,7 @@
 
 ## Usage
 1. Install via composer
-2. Add service provider `Beestreams\LaravelImageable\ImageableProvider::class`
+2. If Laravel 5.4 or lower, add service provider `Beestreams\LaravelImageable\ImageableProvider::class`
 3. run `php artisan vendor:publish --tag=config`
 4. Migrate database
 5. Include Imageable trait on models
