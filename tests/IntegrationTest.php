@@ -107,11 +107,23 @@ class IntegrationTest extends TestCase
     {
         // Setup fake file, parent model and config path
         $image = $this->createOriginal();
-        $configSize = config('imageabledd.sizes.small');
+        $configSize = config('imageable.sizes.small');
         $resizedImage = $image->createResized($image->id, 'small');
         $sourceFile = $resizedImage->sourceFile;
         $this->assertTrue(!empty($sourceFile));
         $resizedImage->delete();
+    }
+
+    /** @test */
+    public function all_sizes_are_deleted_when_original_is_deleted ()
+    {
+        // This test makes no sense. The delete method is triggered in a job. Should check for queue
+        $image = $this->createOriginal();
+        $configSize = config('imageable.sizes.small');
+        $resizedImage = $image->createResized($image->id, 'small');
+        $image->delete();
+        $allImages = $this->exampleModel->images; // createOriginal makes image on exampleModel
+        $this->assertTrue($allImages->isEmpty()); 
     }
 
     /** @test */
