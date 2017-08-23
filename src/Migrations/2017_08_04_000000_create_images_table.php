@@ -16,6 +16,7 @@ class CreateImagesTable extends Migration
         Schema::create('images', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('imageable_id')->unsigned();
+            $table->integer('parent_image_id')->unsigned()->nullable();
             $table->string('imageable_type');
             $table->string('name');
             $table->string('description');
@@ -35,7 +36,6 @@ class CreateImagesTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('categorizables');
         Schema::dropIfExists('images');
     }
 }
