@@ -47,6 +47,32 @@ trait Imageable
         return $this->morphMany(Image::class, 'imageable');
     }
 
+    public function scopeImageType($query, $type)
+    {
+        return $query->where('size_handle', $type);
+    }
+
+    public function smallImages()
+    {
+        return $this->morphMany(Image::class, 'imageable')->where('size_handle', 'small');
+    }
+    
+    public function mediumImages()
+    {
+        return $this->morphMany(Image::class, 'imageable')->where('size_handle', 'medium');
+    }
+
+    public function largeImages()
+    {
+        return $this->morphMany(Image::class, 'imageable')->where('size_handle', 'large');
+    }
+    
+    public function originalImages()
+    {
+        return $this->morphMany(Image::class, 'imageable')->where('size_handle', 'original');
+    }
+
+    // If image is not the original image, get the original
     public function original()
     {
         return $this->belongsTo(Image::class);
