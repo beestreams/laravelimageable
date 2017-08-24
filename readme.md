@@ -31,6 +31,7 @@ TODO:
 - External storage services
 - Delete all sizes on delete
 - Create controller for image and refactor routes file
+- If file directory is empty remove directory on delete
 
 
 ## Important

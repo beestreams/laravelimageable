@@ -8,5 +8,8 @@ Route::get('/images/{image}', function($imageId) {
 Route::delete('/images/{image}/delete', function($imageId) {
     $image = Beestreams\LaravelImageable\Models\Image::findOrFail($imageId);
     $image->delete();
+    if (request()->expectsJson()) {
+        return response(['status' => 'Image deleted']);
+    }
     return redirect()->back();
 })->name('images.delete');

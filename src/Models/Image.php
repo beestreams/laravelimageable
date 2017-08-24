@@ -166,7 +166,7 @@ class Image extends Model
 
     public function deleteFile()
     {
-        \Storage::disk(config('imageable.disk'))->deleteDirectory($this->path.'/'.$this->size_handle);
+        \Storage::delete($this->sourcePath);
         return $this;
     }
     /**
